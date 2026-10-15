@@ -9,23 +9,9 @@ transactions, payouts and invoices.
 
 ## Installation
 
-Add the GitHub repository to `composer.json`, then require the package:
-
-```json
-{
-    "repositories": [
-        { "type": "vcs", "url": "https://github.com/PayRiff/payriff-php" }
-    ],
-    "require": {
-        "payriff/payriff-php": "^0.1"
-    }
-}
+```bash
+composer require payriff/payriff-php
 ```
-
-Then run `composer install`.
-
-> Packagist publishing is coming. After that, the `repositories` entry is no longer needed and
-> `composer require payriff/payriff-php` is enough.
 
 ## Quick start
 
