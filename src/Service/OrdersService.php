@@ -9,7 +9,7 @@ use Payriff\Internal\Transport;
 
 final class OrdersService
 {
-    public function __construct(private readonly Transport $transport)
+    public function __construct(private readonly Transport $transport, private readonly string $defaultCurrency)
     {
     }
 
@@ -17,7 +17,7 @@ final class OrdersService
     {
         $body = Params::compact([
             'amount' => Params::amount(Params::required($params, 'amount'), 'amount'),
-            'currency' => $params['currency'] ?? 'AZN',
+            'currency' => $params['currency'] ?? $this->defaultCurrency,
             'language' => $params['language'] ?? null,
             'operation' => $params['operation'] ?? 'PURCHASE',
             'description' => $params['description'] ?? null,

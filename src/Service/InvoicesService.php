@@ -9,7 +9,7 @@ use Payriff\Internal\Transport;
 
 final class InvoicesService
 {
-    public function __construct(private readonly Transport $transport)
+    public function __construct(private readonly Transport $transport, private readonly string $defaultCurrency)
     {
     }
 
@@ -23,7 +23,7 @@ final class InvoicesService
             'body' => Params::compact([
                 'amount' => Params::amount($params['amount'] ?? null, 'amount'),
                 'amountDynamic' => $params['amountDynamic'] ?? null,
-                'currencyType' => $params['currency'] ?? 'AZN',
+                'currencyType' => $params['currency'] ?? $this->defaultCurrency,
                 'languageType' => $params['language'] ?? null,
                 'fullName' => $params['fullName'] ?? null,
                 'email' => $params['email'] ?? null,

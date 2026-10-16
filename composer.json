@@ -8,9 +8,7 @@
     "require": {
         "php": ">=8.1",
         "ext-curl": "*",
-        "ext-json": "*",
-        "ext-openssl": "*",
-        "phpseclib/phpseclib": "^3.0.36"
+        "ext-json": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "^10.5 || ^11.5 || ^12.0 || ^13.0"

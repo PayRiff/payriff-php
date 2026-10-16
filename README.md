@@ -1,11 +1,11 @@
 # Payriff PHP SDK
 
-PHP client for the Payriff merchant API: orders, direct (host-to-host) card payments, saved cards,
+PHP client for the Payriff merchant API: orders, saved-card payments, saved cards,
 transactions, payouts and invoices.
 
-- PHP 8.1 or newer, with the `curl`, `json` and `openssl` extensions
-- One dependency: `phpseclib/phpseclib` 3.x (RSA-OAEP with SHA-256 for card encryption)
-- Talks to `https://api.payriff.com`
+- PHP 8.1 or newer, with the `curl` and `json` extensions
+- No other dependencies
+- Talks to `https://api.payriff.com` (Azerbaijan) or `https://api.gccpay.sa` (Saudi Arabia)
 
 ## Installation
 
@@ -42,16 +42,34 @@ names of the Payriff API. Create one `Payriff` instance and reuse it.
 | `merchantId` | for payouts and invoices | — | Merchant ID (e.g. `ES1000000`). |
 | `timeout` | no | `60.0` | Total request timeout in seconds. Bank operations can take tens of seconds. |
 | `connectTimeout` | no | `10.0` | Connection timeout in seconds. |
-| `cardEncryptionKey` | no | built-in Payriff key | Only if Payriff rotates the card-encryption key. Base64 or PEM. |
+| `region` | no | `Region::AZERBAIJAN` | API region. Sets the base URL and the default currency. |
+| `baseUrl` | no | from `region` | Override the API URL, e.g. for testing. The currency still comes from `region`. |
 
 Keep the app key in an environment variable or secret store. Never commit it.
+
+### Saudi Arabia
+
+```php
+use Payriff\Payriff;
+use Payriff\Region;
+
+$payriff = new Payriff(appKey: getenv('PAYRIFF_APP_KEY'), region: Region::SAUDI);
+```
+
+| Region | API | Default currency |
+|---|---|---|
+| `Region::AZERBAIJAN` | `https://api.payriff.com` | `AZN` |
+| `Region::SAUDI` | `https://api.gccpay.sa` | `SAR` |
+
+Use the app key from the dashboard of the same region (`dashboard.gccpay.sa` for Saudi Arabia).
+A `currency` passed on a request always wins over the region default.
 
 ## Orders
 
 ```php
 $created = $payriff->orders->create([
     'amount' => '25.00',
-    'currency' => 'AZN',          // default AZN
+    'currency' => 'AZN',          // default: the region currency
     'operation' => 'PRE_AUTH',    // default PURCHASE
     'language' => 'AZ',
     'description' => 'Booking #77',
@@ -73,40 +91,7 @@ $receiptPdf = $payriff->orders->downloadReceipt($created['orderId']);
 
 Amounts can be passed as numeric strings (`'10.50'`), integers or floats.
 
-## Direct payments (host-to-host)
-
-You collect the card details yourself, and the SDK encrypts them before sending
-(AES-256-GCM + RSA-OAEP). Raw card data never leaves your server in clear text, but your
-systems still handle card data, so PCI DSS requirements apply to you.
-
-```php
-use Payriff\CardData;
-
-$result = $payriff->payments->directPay([
-    'amount' => '1.00',
-    'description' => 'Order #1002',
-    'callbackUrl' => 'https://shop.example/payriff/callback',
-    'requestRrn' => 'order-1002',
-    'card' => new CardData(
-        pan: '4169 7413 3015 1979',
-        cardHolder: 'JOHN DOE',
-        expiryMonth: '11',
-        expiryYear: '27',
-        cvv: '123',
-    ),
-]);
-
-if (!empty($result['redirect'])) {
-    // 3-D Secure: send the customer's browser to $result['redirectUrl'].
-    // The final status arrives via your callback or $payriff->orders->get($result['orderId']).
-}
-```
-
-`CardData` strips spaces and dashes, pads the month (`1` → `01`), expands a 2-digit year (`27` → `2027`)
-and rejects malformed values before any network call. It never exposes the card number or CVV
-through `print_r`, `var_dump`, `var_export` or `json_encode`, and it cannot be serialized.
-
-### Charging a saved card
+## Charging a saved card
 
 ```php
 $charge = $payriff->payments->autoPay([
